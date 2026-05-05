@@ -1,56 +1,951 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LoopMaster - Python 迴圈練習實驗室</title>
+    <title>LoopMaster - Nested Loops with break & continue</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        * { box-sizing: border-box; }
         body { font-family: 'Noto Sans TC', sans-serif; }
-        .code-editor { font-family: 'IBM Plex Mono', monospace; }
-        .animation-canvas { background: #111827; border-radius: 16px; }
+        .code-editor { font-family: 'JetBrains Mono', monospace; }
+        .quiz-option:hover { transform: translateX(8px); border-color: #60a5fa; background: #1e3a5f; }
+        .quiz-option.selected { border-color: #22d3ee; background: #134e4a; }
+        .correct { background: #14532d !important; border-color: #22c55e !important; }
+        .wrong { background: #7f1d1d !important; border-color: #ef4444 !important; }
+        canvas { display: block; }
+        .section-fade { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .progress-bar { transition: width 0.5s ease; }
+        .tab-active { background: #1d4ed8; color: white; }
+        .tab-inactive { background: #1f2937; color: #9ca3af; }
     </style>
 </head>
 <body class="bg-zinc-950 text-white">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="flex justify-between items-center border-b border-zinc-800 px-8 py-6">
-            <div class="flex items-center gap-x-3">
-                <div class="w-10 h-10 bg-blue-500 rounded-2xl flex items-center justify-center text-2xl">🔄</div>
-                <h1 class="text-4xl font-bold tracking-tight">LoopMaster</h1>
-                <span class="px-4 py-1 bg-blue-900 text-blue-300 text-sm font-medium rounded-3xl">for • while • continue • break</span>
+
+<!-- ==================== HEADER ==================== -->
+<div class="flex justify-between items-center border-b border-zinc-800 px-8 py-5">
+    <div class="flex items-center gap-x-3">
+        <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-blue-500/30">🔄</div>
+        <h1 class="text-3xl font-bold tracking-tight">LoopMaster</h1>
+        <span class="px-4 py-1.5 bg-blue-900 text-blue-300 text-xs font-semibold rounded-3xl border border-blue-700">80 min • 17 Students</span>
+    </div>
+    <div class="text-center">
+        <div class="text-zinc-400 text-sm">Python Nested Loops • break • continue</div>
+        <div class="text-blue-400 text-xs mt-1">ICT & STEM Course</div>
+    </div>
+    <div class="flex items-center gap-3">
+        <div id="progressBar" class="flex items-center gap-2 text-sm">
+            <span class="text-zinc-400">進度</span>
+            <div class="w-48 h-2.5 bg-zinc-800 rounded-full overflow-hidden">
+                <div id="progressFill" class="h-full bg-blue-500 progress-bar" style="width:0%"></div>
             </div>
-            <p class="text-zinc-400 text-lg">動畫學習 Python 迴圈 • 填空練習 • 小遊戲挑戰</p>
-            <button onclick="loadPyodideAndPackages()" id="loadBtn"
-                    class="px-6 py-3 bg-white text-zinc-900 rounded-3xl font-medium hover:bg-blue-400 transition-all">
-                載入 Python 引擎
-            </button>
+            <span id="progressText" class="text-blue-400 font-mono">0%</span>
+        </div>
+        <button onclick="loadPyodideAndPackages()" id="loadBtn"
+                class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-semibold transition-all shadow-lg shadow-blue-500/20">
+            ⚡ 載入 Python
+        </button>
+    </div>
+</div>
+
+<!-- ==================== MAIN LAYOUT ==================== -->
+<div class="flex" style="height:calc(100vh - 76px)">
+
+    <!-- LEFT: Tab Navigation -->
+    <div class="w-64 border-r border-zinc-800 bg-zinc-900/50 flex flex-col">
+        <div class="p-3 space-y-1.5">
+            <div onclick="switchTab('starter')" id="tab0" class="tab-active px-5 py-3.5 rounded-2xl cursor-pointer flex items-center gap-3 transition-all">
+                <span class="text-xl">🧠</span><div><div class="font-semibold text-sm">Starter</div><div class="text-xs opacity-70">10–15 mins</div></div>
+            </div>
+            <div onclick="switchTab('concept')" id="tab1" class="tab-inactive px-5 py-3.5 rounded-2xl cursor-pointer flex items-center gap-3 transition-all">
+                <span class="text-xl">📖</span><div><div class="font-semibold text-sm">Concepts</div><div class="text-xs opacity-70">for vs while</div></div>
+            </div>
+            <div onclick="switchTab('breakcontinue')" id="tab2" class="tab-inactive px-5 py-3.5 rounded-2xl cursor-pointer flex items-center gap-3 transition-all">
+                <span class="text-xl">⚡</span><div><div class="font-semibold text-sm">break & continue</div><div class="text-xs opacity-70">5 mins</div></div>
+            </div>
+            <div onclick="switchTab('nested')" id="tab3" class="tab-inactive px-5 py-3.5 rounded-2xl cursor-pointer flex items-center gap-3 transition-all">
+                <span class="text-xl">🔁</span><div><div class="font-semibold text-sm">Nested Loops</div><div class="text-xs opacity-70">20–25 mins</div></div>
+            </div>
+            <div onclick="switchTab('practice')" id="tab4" class="tab-inactive px-5 py-3.5 rounded-2xl cursor-pointer flex items-center gap-3 transition-all">
+                <span class="text-xl">🎮</span><div><div class="font-semibold text-sm">Practice & Game</div><div class="text-xs opacity-70">Coding</div></div>
+            </div>
         </div>
 
-        <div class="flex h-[calc(100vh-88px)]">
-            <!-- 左側導航 -->
-            <div class="w-72 border-r border-zinc-800 bg-zinc-900 p-6 overflow-auto">
-                <h2 class="text-blue-400 font-medium mb-4 flex items-center gap-2"><span>📌</span> 學習目標</h2>
-                <ul class="space-y-4 text-sm">
-                    <li class="flex gap-2"><span class="text-blue-400">•</span> <strong>for loop</strong>：迭代固定次數</li>
-                    <li class="flex gap-2"><span class="text-blue-400">•</span> <strong>while loop</strong>：條件判斷持續執行</li>
-                    <li class="flex gap-2"><span class="text-blue-400">•</span> <strong>continue</strong>：跳過本次迭代</li>
-                    <li class="flex gap-2"><span class="text-blue-400">•</span> <strong>break</strong>：提前結束迴圈</li>
-                </ul>
+        <div class="mt-auto p-4 border-t border-zinc-800 text-xs text-zinc-500">
+            <div class="font-semibold mb-2">Learning Goals</div>
+            <ul class="space-y-1">
+                <li>• for vs while loop</li>
+                <li>• break & continue</li>
+                <li>• Nested loops + break/continue</li>
+                <li>• Build a planet game</li>
+            </ul>
+        </div>
+    </div>
 
-                <h2 class="text-blue-400 font-medium mt-10 mb-4">動畫示範</h2>
-                <div onclick="startVisualizer(0)" class="cursor-pointer mb-3 p-4 bg-zinc-800 hover:bg-zinc-700 rounded-3xl text-sm">
-                    <strong>1. for loop 迭代動畫</strong><br>
-                    <span class="text-zinc-400 text-xs">變數 i 變化 + 累加器</span>
+    <!-- CENTER: Main Content Area -->
+    <div class="flex-1 overflow-auto">
+        <!-- ========== STARTER TAB ========== -->
+        <div id="panel0" class="p-8 section-fade">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold">🧠 Starter: Micro:bit Analogy</h2>
+                    <p class="text-zinc-400 mt-1">Think → Pair → Share</p>
                 </div>
-                <div onclick="startVisualizer(1)" class="cursor-pointer mb-3 p-4 bg-zinc-800 hover:bg-zinc-700 rounded-3xl text-sm">
-                    <strong>2. while loop + break</strong><br>
-                    <span class="text-zinc-400 text-xs">猜數字遊戲流程</span>
+                <div class="text-sm text-blue-400">10–15 mins</div>
+            </div>
+
+            <!-- Micro:bit Question 1 -->
+            <div class="bg-zinc-900 rounded-3xl p-6 mb-6 border border-zinc-800">
+                <div class="flex gap-4 mb-4">
+                    <span class="bg-amber-900 text-amber-300 px-3 py-1 rounded-2xl text-sm font-semibold">Q1</span>
+                    <h3 class="text-lg font-medium">What is the output of this Micro:bit code?</h3>
                 </div>
-                <div onclick="startVisualizer(2)" class="cursor-pointer p-4 bg-zinc-800 hover:bg-zinc-700 rounded-3xl text-sm">
-                    <strong>3. continue 跳過範例</strong><br>
-                    <span class="text-zinc-400 text-xs">只印奇數</span>
+                <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm mb-4">
+                    <span class="text-zinc-500">on start</span><br>
+                    &nbsp;&nbsp;set x to 1<br><br>
+                    <span class="text-zinc-500">forever</span><br>
+                    &nbsp;&nbsp;show number x<br>
+                    &nbsp;&nbsp;<span class="text-cyan-400">pause 100</span>
+                </div>
+                <div class="space-y-2">
+                    <div onclick="selectAnswer(this, false)" class="quiz-option p-4 bg-zinc-800 rounded-2xl cursor-pointer border-2 border-transparent transition-all">
+                        A) 0 (shows 0 forever)
+                    </div>
+                    <div onclick="selectAnswer(this, true)" class="quiz-option p-4 bg-zinc-800 rounded-2xl cursor-pointer border-2 border-transparent transition-all">
+                        B) 1 (shows 1 forever)
+                    </div>
+                    <div onclick="selectAnswer(this, false)" class="quiz-option p-4 bg-zinc-800 rounded-2xl cursor-pointer border-2 border-transparent transition-all">
+                        C) No output
+                    </div>
+                </div>
+                <div class="explanation hidden mt-4 p-4 bg-blue-900/40 rounded-2xl text-sm border border-blue-800">
+                    <strong>✅ Correct! 顯示 1</strong><br>
+                    The code in <strong>on start</strong> runs ONE TIME before forever starts.<br>
+                    So x = 1, then forever keeps showing 1.
                 </div>
             </div>
+
+            <!-- Micro:bit Question 2 -->
+            <div class="bg-zinc-900 rounded-3xl p-6 mb-6 border border-zinc-800">
+                <div class="flex gap-4 mb-4">
+                    <span class="bg-amber-900 text-amber-300 px-3 py-1 rounded-2xl text-sm font-semibold">Q2</span>
+                    <h3 class="text-lg font-medium">Why doesn't it keep showing 1 or 0 alternately when you press button A?</h3>
+                </div>
+                <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm mb-4">
+                    <span class="text-zinc-500">on button A pressed</span><br>
+                    &nbsp;&nbsp;show number 1<br>
+                    &nbsp;&nbsp;show number 0
+                </div>
+                <textarea id="q2_answer" placeholder="Think about this: What does 'forever' do? How does it conflict with 'while' loop?" 
+                    class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl p-4 text-sm focus:outline-none focus:border-blue-500" rows="3"></textarea>
+                <button onclick="checkAnswer('q2')" class="mt-3 px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-2xl text-sm font-medium">Submit Answer</button>
+                <div id="q2_result" class="mt-3 hidden p-4 rounded-2xl text-sm"></div>
+            </div>
+
+            <!-- Discussion Questions -->
+            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                <h3 class="text-lg font-semibold mb-4 flex items-center gap-2"><span>💬</span> Discussion (Think–Pair–Share)</h3>
+                <div class="space-y-4">
+                    <div class="bg-zinc-950 rounded-2xl p-5">
+                        <div class="font-semibold text-blue-400 mb-2">Q1: What does <code>forever</code> do?</div>
+                        <textarea class="w-full bg-zinc-800 border border-zinc-700 rounded-xl p-3 text-sm focus:outline-none focus:border-blue-500" rows="2" placeholder="Your answer..."></textarea>
+                        <div class="mt-2 text-xs text-emerald-400">Hint: It runs code non-stop — like <code>while True:</code> in Python</div>
+                    </div>
+                    <div class="bg-zinc-950 rounded-2xl p-5">
+                        <div class="font-semibold text-blue-400 mb-2">Q2: Can we stop a <code>forever</code> loop in Micro:bit?</div>
+                        <textarea class="w-full bg-zinc-800 border border-zinc-700 rounded-xl p-3 text-sm focus:outline-none focus:border-blue-500" rows="2" placeholder="Your answer..."></textarea>
+                    </div>
+                    <div class="bg-zinc-950 rounded-2xl p-5">
+                        <div class="font-semibold text-blue-400 mb-2">Q3: If we only want some iterations to run (e.g., display multiples of 5 in 0–20), what can we do?</div>
+                        <textarea class="w-full bg-zinc-800 border border-zinc-700 rounded-xl p-3 text-sm focus:outline-none focus:border-blue-500" rows="2" placeholder="Think: conditional sentences, flag variables..."></textarea>
+                    </div>
+                </div>
+                <button onclick="nextTab(1)" class="mt-6 px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-2xl font-semibold text-lg">Continue to Concepts →</button>
+            </div>
+        </div>
+
+        <!-- ========== CONCEPT TAB ========== -->
+        <div id="panel1" class="p-8 section-fade hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold">📖 for vs while Loop</h2>
+                    <p class="text-zinc-400 mt-1">When to use which?</p>
+                </div>
+                <div class="text-sm text-blue-400">15 mins</div>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="grid grid-cols-2 gap-6 mb-6">
+                <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                    <h3 class="text-lg font-bold text-blue-400 mb-4">for loop</h3>
+                    <div class="space-y-3">
+                        <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm">
+                            <span class="text-zinc-500"># for loop — known count</span><br>
+                            <span class="text-blue-400">for</span> i <span class="text-blue-400">in</span> range(5):<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;print(i)
+                        </div>
+                        <div class="text-sm text-zinc-400">
+                            ▶ Run the code and observe the output:<br>
+                            <button onclick="runSnippet(0)" class="mt-2 px-4 py-1.5 bg-emerald-700 hover:bg-emerald-600 rounded-xl text-xs font-mono">▶ Run</button>
+                        </div>
+                        <div class="bg-zinc-950 rounded-2xl p-4">
+                            <strong>When to use:</strong>
+                            <ul class="text-sm text-zinc-400 mt-2 space-y-1">
+                                <li>✓ Known number of iterations</li>
+                                <li>✓ Iterating over items (list, range)</li>
+                                <li>✓ Counting / repeating fixed times</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                    <h3 class="text-lg font-bold text-amber-400 mb-4">while loop</h3>
+                    <div class="space-y-3">
+                        <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm">
+                            <span class="text-zinc-500"># while loop — condition-based</span><br>
+                            x = 0<br>
+                            <span class="text-amber-400">while</span> x < 5:<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;print(x)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;x += 1
+                        </div>
+                        <div class="text-sm text-zinc-400">
+                            ▶ Run the code and observe the output:<br>
+                            <button onclick="runSnippet(1)" class="mt-2 px-4 py-1.5 bg-emerald-700 hover:bg-emerald-600 rounded-xl text-xs font-mono">▶ Run</button>
+                        </div>
+                        <div class="bg-zinc-950 rounded-2xl p-4">
+                            <strong>When to use:</strong>
+                            <ul class="text-sm text-zinc-400 mt-2 space-y-1">
+                                <li>✓ Unknown number of iterations</li>
+                                <li>✓ Waiting for user input / condition</li>
+                                <li>✓ Keep running until something happens</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Question -->
+            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 mb-6">
+                <div class="flex gap-4 mb-4">
+                    <span class="bg-purple-900 text-purple-300 px-3 py-1 rounded-2xl text-sm font-semibold">Quick Check</span>
+                </div>
+                <h3 class="text-lg font-medium mb-4">Which loop should you use for "Find the password" (keep asking until correct)?</h3>
+                <div class="space-y-2">
+                    <div onclick="selectAnswer(this, false)" class="quiz-option p-4 bg-zinc-800 rounded-2xl cursor-pointer border-2 border-transparent transition-all">A) for loop</div>
+                    <div onclick="selectAnswer(this, true)" class="quiz-option p-4 bg-zinc-800 rounded-2xl cursor-pointer border-2 border-transparent transition-all">B) while loop</div>
+                    <div onclick="selectAnswer(this, false)" class="quiz-option p-4 bg-zinc-800 rounded-2xl cursor-pointer border-2 border-transparent transition-all">C) Either works</div>
+                </div>
+                <div class="explanation hidden mt-4 p-4 bg-emerald-900/40 rounded-2xl text-sm border border-emerald-800">
+                    <strong>✅ B is correct!</strong><br>
+                    We don't know how many attempts the user will need, so <code>while</code> is better. Use <code>while password != "1234"</code>.
+                </div>
+            </div>
+
+            <!-- Python Equivalents -->
+            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                <h3 class="text-lg font-semibold mb-4">🔄 Micro:bit → Python Equivalents</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-zinc-950 rounded-2xl p-4">
+                        <div class="text-zinc-400 text-sm mb-2">forever (Micro:bit)</div>
+                        <div class="text-zinc-500 text-sm mb-3">→ Python equivalent:</div>
+                        <div class="bg-zinc-800 rounded-xl p-3 font-mono text-sm">
+                            <span class="text-amber-400">while</span> <span class="text-cyan-400">True</span>:<br>
+                            &nbsp;&nbsp;# code here
+                        </div>
+                        <button onclick="runSnippet(2)" class="mt-2 px-4 py-1.5 bg-emerald-700 hover:bg-emerald-600 rounded-xl text-xs font-mono">▶ Try it</button>
+                    </div>
+                    <div class="bg-zinc-950 rounded-2xl p-4">
+                        <div class="text-zinc-400 text-sm mb-2">How to stop forever?</div>
+                        <div class="text-zinc-500 text-sm mb-3">Two ways in Python:</div>
+                        <div class="bg-zinc-800 rounded-xl p-3 font-mono text-sm">
+                            <span class="text-blue-400"># Way 1: Use break</span><br>
+                            while True:<br>
+                            &nbsp;&nbsp;if condition:<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400">break</span>
+                        </div>
+                        <div class="bg-zinc-800 rounded-xl p-3 font-mono text-sm mt-2">
+                            <span class="text-blue-400"># Way 2: Use condition</span><br>
+                            while not done:<br>
+                            &nbsp;&nbsp;# code
+                        </div>
+                    </div>
+                </div>
+                <button onclick="nextTab(2)" class="mt-6 px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-2xl font-semibold text-lg">Continue to break & continue →</button>
+            </div>
+        </div>
+
+        <!-- ========== BREAK & CONTINUE TAB ========== -->
+        <div id="panel2" class="p-8 section-fade hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold">⚡ break vs continue</h2>
+                    <p class="text-zinc-400 mt-1">Skip iterations or exit loops completely</p>
+                </div>
+                <div class="text-sm text-blue-400">5 mins</div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 mb-6">
+                <!-- continue -->
+                <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                    <h3 class="text-lg font-bold text-purple-400 mb-4">continue — Skip this iteration</h3>
+                    <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm">
+                        <span class="text-zinc-500"># Skip value 3</span><br><br>
+                        <span class="text-blue-400">for</span> i <span class="text-blue-400">in</span> range(5):<br>
+                        &nbsp;&nbsp;<span class="text-blue-400">if</span> i == 3:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400">continue</span><br>
+                        &nbsp;&nbsp;print(i)
+                    </div>
+                    <div class="mt-3">
+                        <button onclick="runSnippet(3)" class="px-4 py-1.5 bg-emerald-700 hover:bg-emerald-600 rounded-xl text-xs font-mono">▶ Run</button>
+                    </div>
+                    <div class="mt-4 bg-purple-900/30 rounded-xl p-3 text-sm">
+                        <strong>Output:</strong> 0, 1, 2, 4<br>
+                        <span class="text-zinc-400">Value 3 is SKIPPED, loop continues.</span>
+                    </div>
+                </div>
+                <!-- break -->
+                <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                    <h3 class="text-lg font-bold text-red-400 mb-4">break — Exit loop completely</h3>
+                    <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm">
+                        <span class="text-zinc-500"># Stop at value 3</span><br><br>
+                        <span class="text-blue-400">for</span> i <span class="text-blue-400">in</span> range(5):<br>
+                        &nbsp;&nbsp;<span class="text-blue-400">if</span> i == 3:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-red-400">break</span><br>
+                        &nbsp;&nbsp;print(i)
+                    </div>
+                    <div class="mt-3">
+                        <button onclick="runSnippet(4)" class="px-4 py-1.5 bg-emerald-700 hover:bg-emerald-600 rounded-xl text-xs font-mono">▶ Run</button>
+                    </div>
+                    <div class="mt-4 bg-red-900/30 rounded-xl p-3 text-sm">
+                        <strong>Output:</strong> 0, 1, 2<br>
+                        <span class="text-zinc-400">Loop STOPS at value 3. No more iterations.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Combined Example -->
+            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 mb-6">
+                <h3 class="text-lg font-semibold mb-4">Combined: while + continue + break</h3>
+                <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm mb-4">
+                    number = 0<br>
+                    <span class="text-amber-400">while</span> number < 10:<br>
+                    &nbsp;&nbsp;number += 1<br>
+                    &nbsp;&nbsp;<span class="text-blue-400">if</span> number == 3:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400">continue</span>&nbsp;&nbsp;<span class="text-zinc-500"># skip 3</span><br>
+                    &nbsp;&nbsp;<span class="text-blue-400">if</span> number == 8:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-red-400">break</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-zinc-500"># stop at 8</span><br>
+                    &nbsp;&nbsp;print(number)
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="runSnippet(5)" class="px-4 py-1.5 bg-emerald-700 hover:bg-emerald-600 rounded-xl text-xs font-mono">▶ Run</button>
+                    <button onclick="startAnimation(0)" class="px-4 py-1.5 bg-blue-700 hover:bg-blue-600 rounded-xl text-xs font-mono">🎬 Watch Animation</button>
+                </div>
+                <div id="animCanvas0" class="mt-4 bg-zinc-950 rounded-2xl p-4 hidden">
+                    <canvas id="anim0" width="700" height="140" class="w-full rounded-xl"></canvas>
+                    <div id="anim0_vars" class="mt-3 text-sm font-mono text-emerald-300"></div>
+                </div>
+            </div>
+
+            <!-- Quick Quiz -->
+            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                <h3 class="text-lg font-semibold mb-4">🔍 Quick Quiz</h3>
+                <p class="mb-4 text-zinc-300">What numbers will be printed?</p>
+                <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm mb-4">
+                    <span class="text-blue-400">for</span> i <span class="text-blue-400">in</span> range(10):<br>
+                    &nbsp;&nbsp;<span class="text-blue-400">if</span> i % 2 == 0:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400">continue</span><br>
+                    &nbsp;&nbsp;print(i)
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div onclick="selectAnswer(this, true)" class="quiz-option p-4 bg-zinc-800 rounded-2xl cursor-pointer border-2 border-transparent transition-all text-center">A) 0, 2, 4, 6, 8</div>
+                    <div onclick="selectAnswer(this, false)" class="quiz-option p-4 bg-zinc-800 rounded-2xl cursor-pointer border-2 border-transparent transition-all text-center">B) 1, 3, 5, 7, 9</div>
+                    <div onclick="selectAnswer(this, false)" class="quiz-option p-4 bg-zinc-800 rounded-2xl cursor-pointer border-2 border-transparent transition-all text-center">C) 1, 2, 3, 4, 5...</div>
+                </div>
+                <div class="explanation hidden mt-4 p-4 bg-emerald-900/40 rounded-2xl text-sm border border-emerald-800">
+                    <strong>✅ B is correct!</strong><br>
+                    <code>if i % 2 == 0</code> → if even, <code>continue</code> (skip). So only ODD numbers are printed: 1, 3, 5, 7, 9
+                </div>
+                <button onclick="nextTab(3)" class="mt-6 px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-2xl font-semibold text-lg">Continue to Nested Loops →</button>
+            </div>
+        </div>
+
+        <!-- ========== NESTED LOOP TAB ========== -->
+        <div id="panel3" class="p-8 section-fade hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold">🔁 Nested Loops + break/continue</h2>
+                    <p class="text-zinc-400 mt-1">The core of this lesson — loops inside loops</p>
+                </div>
+                <div class="text-sm text-blue-400">20–25 mins</div>
+            </div>
+
+            <!-- Simple Nested Loop -->
+            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 mb-6">
+                <h3 class="text-lg font-semibold mb-4">Basic Nested Loop</h3>
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm">
+                        <span class="text-blue-400">for</span> i <span class="text-blue-400">in</span> range(3):&nbsp;&nbsp;<span class="text-zinc-500"># outer loop</span><br>
+                        &nbsp;&nbsp;<span class="text-blue-400">for</span> j <span class="text-blue-400">in</span> range(3):&nbsp;<span class="text-zinc-500"># inner loop</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;print(i, j)
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="runSnippet(6)" class="px-4 py-1.5 bg-emerald-700 hover:bg-emerald-600 rounded-xl text-xs font-mono">▶ Run</button>
+                        <button onclick="startAnimation(1)" class="px-4 py-1.5 bg-blue-700 hover:bg-blue-600 rounded-xl text-xs font-mono">🎬 Watch Animation</button>
+                    </div>
+                    <div class="col-span-2 bg-zinc-950 rounded-xl p-3">
+                        <strong>Visual:</strong>
+                        <div class="mt-2 grid grid-cols-3 gap-1" id="nestedGrid0"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- continue in nested -->
+            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 mb-6">
+                <h3 class="text-lg font-semibold mb-4 text-purple-400">continue in Nested Loop</h3>
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm">
+                        <span class="text-blue-400">for</span> i <span class="text-blue-400">in</span> range(3):<br>
+                        &nbsp;&nbsp;<span class="text-blue-400">for</span> j <span class="text-blue-400">in</span> range(3):<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-blue-400">if</span> j == 1:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400">continue</span>&nbsp;<span class="text-zinc-500"># skip j=1</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;print(i, j)
+                    </div>
+                    <div>
+                        <button onclick="runSnippet(7)" class="px-4 py-1.5 bg-emerald-700 hover:bg-emerald-600 rounded-xl text-xs font-mono">▶ Run</button>
+                        <div class="mt-3 bg-zinc-950 rounded-xl p-3 text-sm">
+                            <strong>Question:</strong> Which values are skipped? Does it skip outer loop?
+                        </div>
+                    </div>
+                </div>
+                <div class="explanation mt-4 p-4 bg-purple-900/30 rounded-2xl text-sm">
+                    <strong>Answer:</strong> Only j=1 is skipped in each inner loop. The outer loop (i) keeps running! continue only affects the innermost loop it's in.
+                </div>
+            </div>
+
+            <!-- break in nested -->
+            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 mb-6">
+                <h3 class="text-lg font-semibold mb-4 text-red-400">break in Nested Loop</h3>
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm">
+                        <span class="text-blue-400">for</span> i <span class="text-blue-400">in</span> range(3):<br>
+                        &nbsp;&nbsp;<span class="text-blue-400">for</span> j <span class="text-blue-400">in</span> range(3):<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-blue-400">if</span> j == 1:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-red-400">break</span>&nbsp;<span class="text-zinc-500"># stop inner</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;print(i, j)
+                    </div>
+                    <div>
+                        <button onclick="runSnippet(8)" class="px-4 py-1.5 bg-emerald-700 hover:bg-emerald-600 rounded-xl text-xs font-mono">▶ Run</button>
+                        <div class="mt-3 bg-zinc-950 rounded-xl p-3 text-sm">
+                            <strong>Question:</strong> Does break stop both loops?
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 bg-red-900/30 rounded-2xl p-4 text-sm">
+                    <strong>Answer:</strong> <strong>No!</strong> break only stops the <em>inner</em> loop (j). The outer loop (i) continues!<br>
+                    <span class="text-zinc-400 mt-1 block">To stop both loops, you need a flag variable (advanced).</span>
+                </div>
+            </div>
+
+            <!-- Product Table with break -->
+            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 mb-6">
+                <h3 class="text-lg font-semibold mb-4">Product Table with break</h3>
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm">
+                        <span class="text-blue-400">for</span> i <span class="text-blue-400">in</span> range(1, 6):<br>
+                        &nbsp;&nbsp;<span class="text-blue-400">for</span> j <span class="text-blue-400">in</span> range(1, 6):<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-blue-400">if</span> i * j > 5:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-red-400">break</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;print(i, j, i*j)
+                    </div>
+                    <div>
+                        <button onclick="runSnippet(9)" class="px-4 py-1.5 bg-emerald-700 hover:bg-emerald-600 rounded-xl text-xs font-mono">▶ Run</button>
+                        <div class="mt-3 bg-zinc-950 rounded-xl p-3 text-sm">
+                            <strong>Try to predict</strong> the output before running!
+                        </div>
+                    </div>
+                    <div class="col-span-2 grid grid-cols-6 gap-1 mt-2" id="productGrid"></div>
+                </div>
+            </div>
+
+            <!-- Planet Story -->
+            <div class="bg-zinc-900 rounded-3xl p-6 border border-emerald-800/50 mb-6">
+                <h3 class="text-lg font-semibold mb-2 text-emerald-400">🚀 Story: Planet Explorer Game</h3>
+                <div class="grid grid-cols-2 gap-6 mt-4">
+                    <div class="space-y-3 text-sm">
+                        <div class="bg-zinc-950 rounded-xl p-4">
+                            <strong>Story:</strong><br>
+                            There are <strong>2 planets</strong>.<br>
+                            Each planet has <strong>4 checkpoints</strong>.<br>
+                            Astronaut collects energy points.<br><br>
+                            <strong>Rules:</strong>
+                            <ul class="mt-2 space-y-1 text-zinc-400">
+                                <li>• Checkpoint 2 is broken → use <code>continue</code></li>
+                                <li>• Checkpoint 4 is dangerous → use <code>break</code></li>
+                                <li>• Otherwise, add checkpoint number to energy</li>
+                            </ul>
+                        </div>
+                        <div class="bg-amber-900/30 rounded-xl p-4">
+                            <strong>🎯 Challenge:</strong> Write the code to simulate this game!<br>
+                            Use <strong>nested for loops</strong> + <strong>continue</strong> + <strong>break</strong>.
+                        </div>
+                    </div>
+                    <div>
+                        <div class="bg-zinc-950 rounded-xl p-4 font-mono text-sm">
+energy = 0<br>
+<span class="text-blue-400">for</span> planet <span class="text-blue-400">in</span> range(1, 3):<br>
+&nbsp;&nbsp;print("Landing on planet", planet)<br>
+&nbsp;&nbsp;<span class="text-blue-400">for</span> checkpoint <span class="text-blue-400">in</span> range(1, 5):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-blue-400">if</span> checkpoint == 2:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print("Checkpoint broken. Skip.")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400">continue</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-blue-400">if</span> checkpoint == 4:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print("Danger! Stop planet.")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-red-400">break</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;energy += checkpoint<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print("Collected", checkpoint, "points.")<br>
+&nbsp;&nbsp;print("Leaving planet", planet)<br>
+print("Total energy:", energy)
+                        </div>
+                        <button onclick="runSnippet(10)" class="mt-3 px-4 py-1.5 bg-emerald-700 hover:bg-emerald-600 rounded-xl text-xs font-mono">▶ Run Planet Game</button>
+                        <button onclick="startAnimation(2)" class="mt-3 ml-2 px-4 py-1.5 bg-blue-700 hover:bg-blue-600 rounded-xl text-xs font-mono">🎬 Watch Animation</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- while nested -->
+            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 mb-6">
+                <h3 class="text-lg font-semibold mb-4">While Loop Nested Version</h3>
+                <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm mb-4">
+                    row = 1<br>
+                    <span class="text-amber-400">while</span> row <= 3:<br>
+                    &nbsp;&nbsp;col = 1<br>
+                    &nbsp;&nbsp;<span class="text-amber-400">while</span> col <= 5:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-blue-400">if</span> col == 3:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;col += 1<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400">continue</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;print(row, col)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;col += 1<br>
+                    &nbsp;&nbsp;row += 1
+                </div>
+                <button onclick="runSnippet(11)" class="px-4 py-1.5 bg-emerald-700 hover:bg-emerald-600 rounded-xl text-xs font-mono">▶ Run</button>
+                <div class="mt-4 bg-zinc-950 rounded-xl p-4 text-sm">
+                    <strong>Analogy:</strong> Like ordering food — everyone at a table needs to submit their order before the next table. Or unlocking game levels — you must pass level 1 tasks before level 2.
+                </div>
+                <button onclick="nextTab(4)" class="mt-6 px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-2xl font-semibold text-lg">Continue to Practice →</button>
+            </div>
+        </div>
+
+        <!-- ========== PRACTICE TAB ========== -->
+        <div id="panel4" class="p-8 section-fade hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold">🎮 Coding Practice & Games</h2>
+                    <p class="text-zinc-400 mt-1">Fill in the blanks, then run to check your answer</p>
+                </div>
+            </div>
+
+            <!-- Exercise 1 -->
+            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 mb-6">
+                <div class="flex gap-4 mb-4">
+                    <span class="bg-emerald-900 text-emerald-300 px-3 py-1 rounded-2xl text-sm font-semibold">Exercise 1</span>
+                    <span class="text-zinc-400 text-sm">Use <code>continue</code> to skip even numbers</span>
+                </div>
+                <p class="text-zinc-300 mb-4">Fill in the blank: Use <code>continue</code> to only print odd numbers from 1 to 10.</p>
+                <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm mb-4">
+                    <span class="text-blue-400">for</span> i <span class="text-blue-400">in</span> range(1, 11):<br>
+                    &nbsp;&nbsp;<span class="text-blue-400">if</span> ???:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400">continue</span><br>
+                    &nbsp;&nbsp;print(i)<br><br>
+                    <span class="text-zinc-500"># Expected output: 1 3 5 7 9</span>
+                </div>
+                <div class="flex gap-3 mb-4">
+                    <input id="ex1_fill" type="text" placeholder="Type your answer for ??? (hint: even number check)"
+                           class="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 font-mono">
+                    <button onclick="checkExercise(1)" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-sm font-medium">Check Answer</button>
+                </div>
+                <div id="ex1_result" class="hidden p-4 rounded-2xl text-sm"></div>
+            </div>
+
+            <!-- Exercise 2 -->
+            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 mb-6">
+                <div class="flex gap-4 mb-4">
+                    <span class="bg-amber-900 text-amber-300 px-3 py-1 rounded-2xl text-sm font-semibold">Exercise 2</span>
+                    <span class="text-zinc-400 text-sm">Use <code>break</code> to stop when found</span>
+                </div>
+                <p class="text-zinc-300 mb-4">Fill in the blank: Search for number 7 in a list. Print all numbers until you find 7, then stop.</p>
+                <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm mb-4">
+                    numbers = [3, 1, 4, 1, 5, 9, 2, 6, 7, 8]<br><br>
+                    <span class="text-blue-400">for</span> n <span class="text-blue-400">in</span> numbers:<br>
+                    &nbsp;&nbsp;print(n)<br>
+                    &nbsp;&nbsp;<span class="text-blue-400">if</span> ???:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-red-400">break</span><br><br>
+                    <span class="text-zinc-500"># Expected output: 3 1 4 1 5 9 2 6 7</span>
+                </div>
+                <div class="flex gap-3 mb-4">
+                    <input id="ex2_fill" type="text" placeholder="Type your answer for ??? (hint: what condition finds 7?)"
+                           class="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 font-mono">
+                    <button onclick="checkExercise(2)" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-sm font-medium">Check Answer</button>
+                </div>
+                <div id="ex2_result" class="hidden p-4 rounded-2xl text-sm"></div>
+            </div>
+
+            <!-- Exercise 3 -->
+            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 mb-6">
+                <div class="flex gap-4 mb-4">
+                    <span class="bg-purple-900 text-purple-300 px-3 py-1 rounded-2xl text-sm font-semibold">Exercise 3</span>
+                    <span class="text-zinc-400 text-sm">Nested loop challenge</span>
+                </div>
+                <p class="text-zinc-300 mb-4">Fill in the blank: Create a 3×3 multiplication table, but stop inner loop when product > 10.</p>
+                <div class="bg-zinc-950 rounded-2xl p-4 font-mono text-sm mb-4">
+                    <span class="text-blue-400">for</span> i <span class="text-blue-400">in</span> range(1, 4):<br>
+                    &nbsp;&nbsp;<span class="text-blue-400">for</span> j <span class="text-blue-400">in</span> range(1, 4):<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;if ???:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;print(i, "×", j, "=", i*j)
+                </div>
+                <div class="flex gap-3 mb-4">
+                    <input id="ex3_fill" type="text" placeholder="Type your answer for ???"
+                           class="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 font-mono">
+                    <button onclick="checkExercise(3)" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-sm font-medium">Check Answer</button>
+                </div>
+                <div id="ex3_result" class="hidden p-4 rounded-2xl text-sm"></div>
+            </div>
+
+            <!-- Free Coding Area -->
+            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 mb-6">
+                <h3 class="text-lg font-semibold mb-4">🛠️ Free Coding Zone</h3>
+                <textarea id="freeCode" class="code-editor w-full bg-zinc-950 rounded-2xl p-6 text-emerald-200 text-base leading-relaxed focus:outline-none resize-none" rows="12" spellcheck="false" placeholder="# Write your Python code here...
+
+# Challenge: Design a simple game using nested loops
+# 'Unlock game levels, you need to pass level 1 tasks before level 2'
+# Think about: what will be your outer loop? Inner loop? Where to use break/continue?"></textarea>
+                <div class="flex gap-3 mt-4">
+                    <button onclick="runFreeCode()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-medium flex items-center gap-x-2">▶ Run Code</button>
+                    <button onclick="clearAllOutput()" class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl">Clear Output</button>
+                    <button onclick="loadHint()" class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl">💡 Show Hint</button>
+                </div>
+                <div id="freeCodeHint" class="hidden mt-4 p-4 bg-blue-900/40 rounded-2xl text-sm border border-blue-800">
+                    <strong>💡 Hint:</strong> Try a simple game where you have 3 levels, each level has 4 tasks. Skip task 2 (broken), stop at task 4 (danger). Count total points!
+                </div>
+                <div id="freeCodeOutput" class="mt-4 p-4 bg-black rounded-2xl font-mono text-sm text-emerald-100 min-h-[100px] whitespace-pre-wrap"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Output Panel -->
+    <div class="w-80 border-l border-zinc-800 flex flex-col bg-zinc-950">
+        <div class="px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
+            <h2 class="font-semibold text-sm flex items-center gap-2"><span class="text-emerald-400">◉</span> Python Output</h2>
+            <span id="status" class="text-xs px-3 py-1 bg-zinc-900 rounded-3xl text-zinc-400">等待中</span>
+        </div>
+        <div id="output" class="flex-1 p-5 font-mono text-xs leading-relaxed overflow-auto text-emerald-100 whitespace-pre-wrap"></div>
+        <div class="p-4 border-t border-zinc-800 bg-zinc-900 text-xs text-zinc-500">
+            Output will appear here after running code
+        </div>
+    </div>
+</div>
+
+<script>
+    let pyodideInstance = null;
+
+    // ========== PYODIDE LOADING ==========
+    async function loadPyodideAndPackages() {
+        const statusEl = document.getElementById('status');
+        const btn = document.getElementById('loadBtn');
+        btn.disabled = true;
+        btn.textContent = '載入中...';
+        statusEl.textContent = '下載 Python';
+
+        pyodideInstance = await loadPyodide();
+        await pyodideInstance.runPythonAsync(`
+import sys
+from js import document, prompt
+class ConsoleWriter:
+    def write(self, text):
+        if text: document.getElementById("output").innerHTML += text.replace(/\\n/g, "<br>")
+    def flush(self): pass
+sys.stdout = ConsoleWriter()
+def custom_input(p=""):
+    if p: print(p, end="")
+    return prompt("🔹 請輸入：") || ""
+__builtins__.input = custom_input
+        `);
+        statusEl.textContent = '✅ 就緒';
+        statusEl.className = 'text-xs px-3 py-1 bg-emerald-900 rounded-3xl text-emerald-300';
+        btn.textContent = '✅ 已載入';
+    }
+
+    // ========== TAB SWITCHING ==========
+    let currentTab = 0;
+    let completedTabs = new Set();
+
+    function switchTab(tabIndex) {
+        document.querySelectorAll('[id^="panel"]').forEach(p => p.classList.add('hidden'));
+        document.getElementById('panel' + tabIndex).classList.remove('hidden');
+        document.querySelectorAll('[id^="tab"]').forEach((t, i) => {
+            t.className = (i === tabIndex ? 'tab-active' : 'tab-inactive') + ' px-5 py-3.5 rounded-2xl cursor-pointer flex items-center gap-3 transition-all';
+        });
+        currentTab = tabIndex;
+        updateProgress();
+    }
+
+    function nextTab(nextIndex) {
+        completedTabs.add(currentTab);
+        switchTab(nextIndex);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        const total = 5;
+        const done = completedTabs.size;
+        const pct = Math.round((done / total) * 100);
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressText').textContent = pct + '%';
+    }
+
+    // ========== QUIZ LOGIC ==========
+    function selectAnswer(element, isCorrect) {
+        const parent = element.parentElement;
+        parent.querySelectorAll('.quiz-option').forEach(opt => {
+            opt.classList.remove('selected', 'correct', 'wrong');
+        });
+        element.classList.add('selected');
+        element.classList.add(isCorrect ? 'correct' : 'wrong');
+        if (!isCorrect) {
+            parent.querySelectorAll('.quiz-option').forEach(opt => {
+                if (opt.onclick.toString().includes('true')) {
+                    opt.classList.add('correct');
+                }
+            });
+        }
+        const explanation = parent.parentElement.querySelector('.explanation');
+        if (explanation) explanation.classList.remove('hidden');
+        completedTabs.add(currentTab);
+        updateProgress();
+    }
+
+    function checkAnswer(qId) {
+        const resultEl = document.getElementById(qId + '_result');
+        const answer = document.getElementById(qId + '_answer').value.trim();
+        resultEl.classList.remove('hidden');
+        if (qId === 'q2') {
+            if (answer.length > 5) {
+                resultEl.innerHTML = '<span class="text-emerald-400">✅ Good thinking! Remember: forever runs non-stop. When you press button A, it runs once and stops. The conflict comes from forever already running continuously.</span>';
+                resultEl.className = 'mt-3 p-4 rounded-2xl text-sm bg-emerald-900/40 border border-emerald-800';
+            } else {
+                resultEl.innerHTML = '<span class="text-amber-400">💡 Think more: forever means the code runs repeatedly, non-stop. It conflicts with the one-time button press.</span>';
+                resultEl.className = 'mt-3 p-4 rounded-2xl text-sm bg-amber-900/40 border border-amber-800';
+            }
+        }
+        completedTabs.add(currentTab);
+        updateProgress();
+    }
+
+    function checkExercise(num) {
+        const input = document.getElementById('ex' + num + '_fill').value.trim().toLowerCase();
+        const resultEl = document.getElementById('ex' + num + '_result');
+        resultEl.classList.remove('hidden');
+        let correct = false;
+        if (num === 1) correct = input.includes('i % 2 == 0') || input.includes('i%2==0') || input === 'i % 2 == 0';
+        if (num === 2) correct = input.includes('n == 7') || input === 'n == 7' || input.includes('== 7');
+        if (num === 3) correct = input.includes('i * j > 10') || input.includes('i*j>10') || input.includes('i*j > 10') || input.includes('ij>10');
+        if (correct) {
+            resultEl.innerHTML = '✅ <strong>Correct!</strong> Run the code to see the result.';
+            resultEl.className = 'p-4 rounded-2xl text-sm bg-emerald-900/40 border border-emerald-800';
+        } else {
+            resultEl.innerHTML = '❌ <strong>Not quite.</strong> Hint: think about the condition that checks for even numbers (modulo), finding 7, or product > 10.';
+            resultEl.className = 'p-4 rounded-2xl text-sm bg-red-900/40 border border-red-800';
+        }
+        completedTabs.add(currentTab);
+        updateProgress();
+    }
+
+    // ========== RUN PYTHON SNIPPETS ==========
+    const snippets = [
+        'for i in range(5):\n    print(i)',
+        'x = 0\nwhile x < 5:\n    print(x)\n    x += 1',
+        'count = 0\nwhile True:\n    count += 1\n    print(count)\n    if count >= 5:\n        break',
+        'for i in range(5):\n    if i == 3:\n        continue\n    print(i)',
+        'for i in range(5):\n    if i == 3:\n        break\n    print(i)',
+        'number = 0\nwhile number < 10:\n    number += 1\n    if number == 3:\n        continue\n    if number == 8:\n        break\n    print(number)',
+        'for i in range(3):\n    for j in range(3):\n        print(i, j)',
+        'for i in range(3):\n    for j in range(3):\n        if j == 1:\n            continue\n        print(i, j)',
+        'for i in range(3):\n    for j in range(3):\n        if j == 1:\n            break\n        print(i, j)',
+        'for i in range(1, 6):\n    for j in range(1, 6):\n        if i * j > 5:\n            break\n        print(i, j, "=", i*j)',
+        'energy = 0\nfor planet in range(1, 3):\n    print("Landing on planet", planet)\n    for checkpoint in range(1, 5):\n        if checkpoint == 2:\n            print("Checkpoint 2 is broken. Skip it.")\n            continue\n        if checkpoint == 4:\n            print("Danger at checkpoint 4! Stop this planet.")\n            break\n        energy += checkpoint\n        print("Collected", checkpoint, "energy points.")\n    print("Leaving planet", planet)\nprint("Total energy:", energy)',
+        'row = 1\nwhile row <= 3:\n    col = 1\n    while col <= 5:\n        if col == 3:\n            col += 1\n            continue\n        print(row, col)\n        col += 1\n    row += 1'
+    ];
+
+    async function runSnippet(index) {
+        if (!pyodideInstance) { alert("Please load Python engine first!"); return; }
+        const outputEl = document.getElementById('output');
+        outputEl.innerHTML += `<span class="text-blue-400">// Snippet ${index + 1} output:</span><br>`;
+        try {
+            await pyodideInstance.runPythonAsync(snippets[index]);
+        } catch (err) {
+            outputEl.innerHTML += `<span class="text-red-400">Error: ${err.message}</span><br>`;
+        }
+        outputEl.innerHTML += '<span class="text-zinc-500">---</span><br>';
+        outputEl.scrollTop = outputEl.scrollHeight;
+        completedTabs.add(currentTab);
+        updateProgress();
+    }
+
+    async function runFreeCode() {
+        if (!pyodideInstance) { alert("Please load Python engine first!"); return; }
+        const code = document.getElementById('freeCode').value;
+        const out = document.getElementById('freeCodeOutput');
+        out.innerHTML = '<span class="text-amber-400">Running...</span>\n';
+        try {
+            const captured = [];
+            pyodideInstance.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+            await pyodideInstance.runPythonAsync(code);
+            const result = pyodideInstance.runPython('sys.stdout.getvalue()');
+            out.textContent = result || '(Code ran with no output)';
+        } catch (err) {
+            out.innerHTML = `<span class="text-red-400">Error: ${err.message}</span>`;
+        }
+        completedTabs.add(4);
+        updateProgress();
+    }
+
+    function clearAllOutput() {
+        document.getElementById('output').innerHTML = '';
+        document.getElementById('freeCodeOutput').innerHTML = '';
+    }
+
+    function loadHint() {
+        const el = document.getElementById('freeCodeHint');
+        el.classList.toggle('hidden');
+    }
+
+    // ========== ANIMATIONS ==========
+    function startAnimation(type) {
+        if (type === 0) {
+            document.getElementById('animCanvas0').classList.remove('hidden');
+            animateCombined();
+        } else if (type === 1) {
+            drawNestedGrid();
+        } else if (type === 2) {
+            animatePlanetGame();
+        }
+    }
+
+    function animateCombined() {
+        const canvas = document.getElementById('anim0');
+        const ctx = canvas.getContext('2d');
+        const varsEl = document.getElementById('anim0_vars');
+        let step = 0;
+        const maxSteps = 8;
+        const steps = [
+            { num: 1, action: '' }, { num: 2, action: '' },
+            { num: 3, action: 'continue' }, { num: 4, action: '' },
+            { num: 5, action: '' }, { num: 6, action: '' },
+            { num: 7, action: '' }, { num: 8, action: 'break' }
+        ];
+        let timer;
+        function draw() {
+            ctx.clearRect(0, 0, 700, 140);
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, 700, 140);
+            // Draw loop steps
+            steps.forEach((s, i) => {
+                const x = 30 + i * 85;
+                const y = 50;
+                ctx.fillStyle = i < step ? (s.action === 'continue' ? '#8b5cf6' : s.action === 'break' ? '#ef4444' : '#22c55e') : '#374151';
+                ctx.beginPath();
+                ctx.roundRect(x, y, 70, 50, 10);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 16px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(s.num, x + 35, y + 30);
+                if (s.action) {
+                    ctx.font = '10px monospace';
+                    ctx.fillStyle = s.action === 'continue' ? '#a78bfa' : '#f87171';
+                    ctx.fillText(s.action, x + 35, y + 46);
+                }
+                // Arrow
+                if (i < steps.length - 1) {
+                    ctx.strokeStyle = '#4b5563';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x + 70, y + 25);
+                    ctx.lineTo(x + 82, y + 25);
+                    ctx.stroke();
+                }
+            });
+            const current = steps[step - 1];
+            if (current) {
+                varsEl.innerHTML = `number = ${current.num} &nbsp;|&nbsp; action: ${current.action || 'print number'} &nbsp;|&nbsp; printed: ${step > 0 && !current.action ? current.num : step > 0 ? current.action === 'continue' ? 'skipped ' + current.num : 'stopped at ' + current.num : '—'}`;
+            }
+        }
+        function nextStep() {
+            step++;
+            if (step > maxSteps) return;
+            draw();
+            timer = setTimeout(nextStep, 600);
+        }
+        timer = setTimeout(nextStep, 100);
+    }
+
+    function drawNestedGrid() {
+        const gridEl = document.getElementById('nestedGrid0');
+        gridEl.innerHTML = '';
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'bg-zinc-800 rounded-lg p-3 text-center font-mono text-sm hover:bg-zinc-700 transition-colors';
+                cell.textContent = `${i},${j}`;
+                cell.style.animationDelay = `${(i * 3 + j) * 100}ms`;
+                gridEl.appendChild(cell);
+            }
+        }
+        // Animate
+        const cells = gridEl.querySelectorAll('div');
+        cells.forEach((c, i) => {
+            c.style.opacity = '0';
+            c.style.transform = 'scale(0.8)';
+            setTimeout(() => {
+                c.style.transition = 'all 0.3s';
+                c.style.opacity = '1';
+                c.style.transform = 'scale(1)';
+            }, i * 100);
+        });
+    }
+
+    function animatePlanetGame() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 600;
+        canvas.height = 300;
+        canvas.className = 'w-full rounded-xl mt-4 bg-zinc-950';
+        // Build planet visualization
+        let output = document.createElement('div');
+        output.className = 'mt-4 p-4 bg-zinc-950 rounded-2xl font-mono text-sm space-y-2';
+        output.innerHTML = `
+            <div class="flex gap-4">
+                <div class="flex-1 bg-blue-900/40 rounded-xl p-3 text-center">
+                    <div class="text-blue-400 font-bold">Planet 1</div>
+                    <div class="text-xs text-zinc-400">CP 1→4, energy += checkpoint<br>CP2=continue, CP4=break</div>
+                </div>
+                <div class="flex-1 bg-green-900/40 rounded-xl p-3 text-center">
+                    <div class="text-green-400 font-bold">Planet 2</div>
+                    <div class="text-xs text-zinc-400">Same rules</div>
+                </div>
+            </div>
+            <div class="text-emerald-300 mt-2">Animation: Watch CP1(+1) → CP2(skip) → CP3(+3) → CP4(danger→break) → Move to Planet 2</div>
+        `;
+        document.getElementById('panel3').querySelector('.bg-emerald-900\\/30').appendChild(output);
+    }
+
+    window.onload = () => { switchTab(0); };
+</script>
+</body>
+</html>

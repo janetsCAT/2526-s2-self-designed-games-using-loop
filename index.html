@@ -1,236 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LoopQuest - Build Games with Python Loops</title>
+    <title>LoopMaster - Python 迴圈練習實驗室</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500&family=IBM+Plex+Mono:wght@400;500&display=swap');
-        body { font-family: 'Space Grotesk', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; }
         .code-editor { font-family: 'IBM Plex Mono', monospace; }
+        .animation-canvas { background: #111827; border-radius: 16px; }
     </style>
 </head>
 <body class="bg-zinc-950 text-white">
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
-        <div class="flex justify-between items-center border-b border-zinc-800 px-8 py-5">
+        <div class="flex justify-between items-center border-b border-zinc-800 px-8 py-6">
             <div class="flex items-center gap-x-3">
-                <div class="w-9 h-9 bg-emerald-500 rounded-xl flex items-center justify-center text-xl">🔄</div>
-                <h1 class="text-3xl font-semibold tracking-tight">LoopQuest</h1>
-                <span class="text-emerald-400 text-sm font-medium px-3 py-1 bg-emerald-950 rounded-2xl">Learn Loops • Build Games</span>
+                <div class="w-10 h-10 bg-blue-500 rounded-2xl flex items-center justify-center text-2xl">🔄</div>
+                <h1 class="text-4xl font-bold tracking-tight">LoopMaster</h1>
+                <span class="px-4 py-1 bg-blue-900 text-blue-300 text-sm font-medium rounded-3xl">for • while • continue • break</span>
             </div>
-            <p class="text-zinc-400 max-w-md text-center">Design simple games using <strong class="text-white">for</strong>, <strong class="text-white">while</strong>, nested loops, <strong class="text-white">continue</strong> & <strong class="text-white">break</strong></p>
+            <p class="text-zinc-400 text-lg">動畫學習 Python 迴圈 • 填空練習 • 小遊戲挑戰</p>
             <button onclick="loadPyodideAndPackages()" id="loadBtn"
-                    class="px-5 py-2 bg-white text-zinc-900 rounded-2xl font-medium hover:bg-emerald-400 transition">
-                Load Python Engine
+                    class="px-6 py-3 bg-white text-zinc-900 rounded-3xl font-medium hover:bg-blue-400 transition-all">
+                載入 Python 引擎
             </button>
         </div>
 
-        <div class="flex h-[calc(100vh-73px)]">
-            <!-- Sidebar -->
+        <div class="flex h-[calc(100vh-88px)]">
+            <!-- 左側導航 -->
             <div class="w-72 border-r border-zinc-800 bg-zinc-900 p-6 overflow-auto">
-                <h2 class="text-emerald-400 font-medium mb-4 flex items-center gap-2"><span>📌</span> Learning Goals</h2>
-                <ul class="space-y-3 text-sm">
-                    <li class="flex gap-2"><span class="text-emerald-400">•</span> Master <strong>for</strong> loops for iterations</li>
-                    <li class="flex gap-2"><span class="text-emerald-400">•</span> Control flow with <strong>while</strong></li>
-                    <li class="flex gap-2"><span class="text-emerald-400">•</span> Use nested loops for 2D structures (game maps)</li>
-                    <li class="flex gap-2"><span class="text-emerald-400">•</span> Skip iterations with <strong>continue</strong></li>
-                    <li class="flex gap-2"><span class="text-emerald-400">•</span> Exit loops early with <strong>break</strong></li>
+                <h2 class="text-blue-400 font-medium mb-4 flex items-center gap-2"><span>📌</span> 學習目標</h2>
+                <ul class="space-y-4 text-sm">
+                    <li class="flex gap-2"><span class="text-blue-400">•</span> <strong>for loop</strong>：迭代固定次數</li>
+                    <li class="flex gap-2"><span class="text-blue-400">•</span> <strong>while loop</strong>：條件判斷持續執行</li>
+                    <li class="flex gap-2"><span class="text-blue-400">•</span> <strong>continue</strong>：跳過本次迭代</li>
+                    <li class="flex gap-2"><span class="text-blue-400">•</span> <strong>break</strong>：提前結束迴圈</li>
                 </ul>
 
-                <h2 class="text-emerald-400 font-medium mt-10 mb-4">Examples</h2>
-                <div onclick="loadExample(0)" class="cursor-pointer mb-3 p-4 bg-zinc-800 hover:bg-zinc-700 rounded-3xl text-sm">
-                    <strong>1. Obstacle Runner</strong><br>
-                    <span class="text-zinc-400 text-xs">for + continue + break</span>
+                <h2 class="text-blue-400 font-medium mt-10 mb-4">動畫示範</h2>
+                <div onclick="startVisualizer(0)" class="cursor-pointer mb-3 p-4 bg-zinc-800 hover:bg-zinc-700 rounded-3xl text-sm">
+                    <strong>1. for loop 迭代動畫</strong><br>
+                    <span class="text-zinc-400 text-xs">變數 i 變化 + 累加器</span>
                 </div>
-                <div onclick="loadExample(1)" class="cursor-pointer mb-3 p-4 bg-zinc-800 hover:bg-zinc-700 rounded-3xl text-sm">
-                    <strong>2. Number Guessing Game</strong><br>
-                    <span class="text-zinc-400 text-xs">while + break</span>
+                <div onclick="startVisualizer(1)" class="cursor-pointer mb-3 p-4 bg-zinc-800 hover:bg-zinc-700 rounded-3xl text-sm">
+                    <strong>2. while loop + break</strong><br>
+                    <span class="text-zinc-400 text-xs">猜數字遊戲流程</span>
                 </div>
-                <div onclick="loadExample(2)" class="cursor-pointer p-4 bg-zinc-800 hover:bg-zinc-700 rounded-3xl text-sm">
-                    <strong>3. Game Map (Nested Loops)</strong><br>
-                    <span class="text-zinc-400 text-xs">for inside for</span>
-                </div>
-            </div>
-
-            <!-- Main Editor -->
-            <div class="flex-1 flex flex-col">
-                <div class="px-8 pt-6 pb-3 border-b border-zinc-800 flex items-center justify-between">
-                    <h2 class="text-xl font-medium">Your Python Code</h2>
-                    <div class="flex gap-x-3">
-                        <button onclick="runCode()" 
-                                class="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-2xl font-medium transition flex items-center gap-x-2">
-                            ▶️ Run Game
-                        </button>
-                        <button onclick="clearOutput()" 
-                                class="px-5 py-2 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition">
-                            Clear Output
-                        </button>
-                    </div>
-                </div>
-
-                <textarea id="code" class="code-editor flex-1 bg-zinc-950 p-8 text-emerald-200 text-lg leading-relaxed focus:outline-none resize-none" spellcheck="false"></textarea>
-
-                <div class="px-8 py-4 bg-zinc-900 border-t border-zinc-800 text-xs text-zinc-500 flex items-center">
-                    <span class="bg-zinc-800 px-3 py-1 rounded-2xl">Tip: Use input() for interactive games. First load may take 15-30 seconds.</span>
+                <div onclick="startVisualizer(2)" class="cursor-pointer p-4 bg-zinc-800 hover:bg-zinc-700 rounded-3xl text-sm">
+                    <strong>3. continue 跳過範例</strong><br>
+                    <span class="text-zinc-400 text-xs">只印奇數</span>
                 </div>
             </div>
-
-            <!-- Output -->
-            <div class="w-96 border-l border-zinc-800 bg-black flex flex-col">
-                <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-950">
-                    <h2 class="font-medium flex items-center gap-2"><span class="text-emerald-400">◉</span> Game Console</h2>
-                    <span id="status" class="text-xs px-4 py-1 bg-zinc-900 rounded-3xl text-emerald-300">Python ready</span>
-                </div>
-                <div id="output" class="flex-1 p-6 font-mono text-sm leading-relaxed overflow-auto bg-black text-emerald-100 whitespace-pre-wrap"></div>
-                <div class="p-4 border-t border-zinc-800 text-[10px] text-zinc-500 bg-zinc-950">
-                    Output from your print() and input() calls will appear here.
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let pyodideInstance = null;
-
-        async function loadPyodideAndPackages() {
-            const statusEl = document.getElementById('status');
-            const btn = document.getElementById('loadBtn');
-            btn.disabled = true;
-            btn.textContent = 'Loading Python...';
-
-            statusEl.textContent = 'Downloading Pyodide...';
-            statusEl.className = 'text-xs px-4 py-1 bg-amber-900 rounded-3xl text-amber-300';
-
-            pyodideInstance = await loadPyodide();
-
-            await pyodideInstance.runPythonAsync(`
-import sys
-from js import document, prompt
-
-class ConsoleWriter:
-    def write(self, text):
-        if text:
-            out = document.getElementById("output")
-            out.innerHTML += text.replace(/\\n/g, "<br>")
-    def flush(self):
-        pass
-
-sys.stdout = ConsoleWriter()
-
-def custom_input(prompt_str=""):
-    if prompt_str:
-        print(prompt_str, end="")
-    user_input = prompt("🔹 Python input(): Enter your answer")
-    if (user_input === null) user_input = ""
-    print(user_input)
-    return user_input
-
-__builtins__.input = custom_input
-            `);
-
-            statusEl.textContent = '✅ Python ready';
-            statusEl.className = 'text-xs px-4 py-1 bg-emerald-900 rounded-3xl text-emerald-300';
-        }
-
-        async function runCode() {
-            if (!pyodideInstance) {
-                alert("Please click 'Load Python Engine' first!");
-                return;
-            }
-
-            const code = document.getElementById('code').value;
-            const outputEl = document.getElementById('output');
-
-            outputEl.innerHTML += '<span class="text-amber-400">▶ Running your game...</span><br>';
-
-            try {
-                await pyodideInstance.runPythonAsync(code);
-            } catch (err) {
-                outputEl.innerHTML += `<span class="text-red-400">Error: ${err.message}</span><br>`;
-            }
-            outputEl.scrollTop = outputEl.scrollHeight;
-        }
-
-        function clearOutput() {
-            document.getElementById('output').innerHTML = '';
-        }
-
-        const examples = [
-            `# Obstacle Runner - for, continue, break
-print("🚀 Welcome to LoopQuest Obstacle Runner!")
-print("You have 10 turns. Avoid obstacles!\\n")
-
-score = 0
-for turn in range(1, 11):
-    print(f"--- Turn {turn} ---")
-    if turn % 3 == 0:
-        print("⚠️  Obstacle ahead!")
-        action = input("Jump or slide? (j/s): ").lower()
-        if action not in ['j', 's', 'jump', 'slide']:
-            print("❌ Invalid! Turn skipped.")
-            continue
-        print("✅ Nice move!")
-        score += 15
-    else:
-        print("Clear path ahead 🟢")
-        score += 8
-    
-    if score >= 80:
-        print("🏆 Amazing! Early finish.")
-        break
-
-print(f"\\n🏁 Game finished! Final score: {score}")`,
-
-            `# Number Guessing Game - while + break
-import random
-print("🎲 Number Guessing Game")
-number = random.randint(1, 50)
-attempts = 0
-max_attempts = 8
-
-while attempts < max_attempts:
-    guess = int(input(f"Attempt {attempts+1}/{max_attempts}. Guess the number (1-50): "))
-    attempts += 1
-    
-    if guess == number:
-        print(f"🎉 Correct! You won in {attempts} attempts!")
-        break
-    elif guess < number:
-        print("📈 Too low!")
-    else:
-        print("📉 Too high!")
-        
-    if attempts == max_attempts:
-        print(f"😔 Game over. The number was {number}.")`,
-
-            `# Nested Loops - Print Game Map
-print("🗺️  Game Map (Nested for loops)\\n")
-for row in range(8):
-    for col in range(12):
-        if row == 0 or row == 7 or col == 0 or col == 11:
-            print("█", end="")
-        elif row == 3 and col == 5:
-            print("👤", end="")  # Player
-        elif row == 4 and col == 8:
-            print("💎", end="")  # Treasure
-        else:
-            print("·", end="")
-    print()
-print("\\nUse nested loops to build levels in your games!")`
-        ];
-
-        function loadExample(index) {
-            document.getElementById('code').value = examples[index];
-            clearOutput();
-            document.getElementById('output').innerHTML = '<span class="text-emerald-400">Example loaded! Click Run Game.</span><br>';
-        }
-
-        window.onload = function() {
-            document.getElementById('code').value = examples[0];
-        };
-    </script>
-</body>
-</html>
